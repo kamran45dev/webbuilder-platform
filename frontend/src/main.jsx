@@ -1,7 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'  // ✅ ADD THIS
+import axios from 'axios' // ← make sure this is imported
+
+// Set base URL from env var
+axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
 import App from './App'
 

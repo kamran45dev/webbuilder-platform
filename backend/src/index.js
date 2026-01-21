@@ -1,5 +1,3 @@
-import './polyfills.js'
-
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import auth from './routes/auth.js'
@@ -8,15 +6,22 @@ import deploy from './routes/deploy.js'
 
 const app = new Hono()
 
+// CORS + preflight
 app.use('/*', cors({
-  origin: ['http://localhost:5173'],
-  credentials: true
+  origin: (origin) => origin ?? '*',
+  allowMethods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowHeaders: ['Content-Type','Authorization'],
+  credentials: true,
+  maxAge: 86400
 }))
+app.options('/*', (c) => c.text('', 204))
 
-app.get('/', (c) => c.json({ message: 'WebBuilder API v1' }))
+// Health
+app.get('/', (c) => c.json({ ok: true, service: 'WebBuilder API' }))
 
-app.route('/auth', auth)
-app.route('/projects', projects)
-app.route('/', deploy)
+// Mount under /api (so frontend calls hit /api/…)
+app.route('/api/auth', auth)
+app.route('/api/projects', projects)
+app.route('/api', deploy) // deploy routes: /api/projects/:id/deploy/...
 
 export default app
