@@ -1,0 +1,10 @@
+name = "webbuilder-platform"
+main = "frontend/index.html"
+compatibility_date = "2024-01-01"
+
+[build]
+command = "cd frontend && npm run build"
+output_directory = "frontend/dist"
+
+[env.production.variables]
+VITE_API_URL = "https://webbuilder-api.kamran45-dev.workers.dev"
