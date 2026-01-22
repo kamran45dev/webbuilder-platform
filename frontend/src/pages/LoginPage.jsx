@@ -2,7 +2,7 @@ import { useState, useContext } from 'react'
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
-import axios from 'axios'
+import axios from '../services/api'
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' })

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Container, Row, Col, Card, Button, Badge, Nav, Modal } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../services/api'
 
 // Full website templates with actual component layouts
 const WEBSITE_TEMPLATES = {

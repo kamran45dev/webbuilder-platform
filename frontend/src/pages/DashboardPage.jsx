@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../services/api'
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState([])

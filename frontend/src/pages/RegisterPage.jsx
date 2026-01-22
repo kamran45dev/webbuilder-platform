@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Container, Card, Form, Button, Alert } from 'react-bootstrap'
 import { useNavigate, Link } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../services/api'
 
 export default function RegisterPage() {
   const [step, setStep] = useState('register') // 'register' or 'verify'

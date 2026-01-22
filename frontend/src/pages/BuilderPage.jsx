@@ -4,7 +4,7 @@ import { Container, Row, Col, Button, Navbar, ListGroup, Card, Nav, Modal, Butto
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, TouchSensor } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import axios from 'axios'
+import axios from '../services/api'
 import { COMPONENT_LIST, DEFAULT_PROPS, PAGE_TEMPLATES } from '../components/builder/ComponentLibrary'
 import ComponentRenderer from '../components/builder/ComponentRenderer'
 import PropertiesPanel from '../components/builder/PropertiesPanel'
