@@ -1,12 +1,11 @@
-import { useState } from 'react'
+import React from 'react'
 import { Button, Accordion } from 'react-bootstrap'
 import { COMPONENT_TYPES } from './ComponentLibrary'
 
-export default function ComponentRenderer({ component, isSelected, onClick }) {
-  const [isHovered, setIsHovered] = useState(false)
+function ComponentRenderer({ component, isSelected, onClick }) {
   const { type, props } = component
 
-  const containerClass = `mb-3 position-relative ${isSelected ? 'border border-primary border-3' : 'border border-secondary'} p-3 rounded`
+  const containerClass = `mb-3 position-relative ${isSelected ? 'border border-primary border-3' : 'border border-secondary'} p-3 rounded component-container`
 
   const renderContent = () => {
     switch (type) {
@@ -258,32 +257,32 @@ export default function ComponentRenderer({ component, isSelected, onClick }) {
 
   return (
     <div 
-      className={containerClass} 
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={containerClass}
       style={{ cursor: 'pointer' }}
+      onClick={onClick}
     >
-      {(isHovered || isSelected) && (
-        <Button 
-          variant="primary" 
-          size="sm" 
-          className="position-absolute top-0 end-0 m-2"
-          style={{ zIndex: 10 }}
-          onMouseDown={(e) => {
-            e.stopPropagation()
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            e.preventDefault()
-            onClick()
-          }}
-        >
-          ✏️ Edit
-        </Button>
-      )}
+      <Button 
+        variant="primary" 
+        size="sm" 
+        className="edit-button"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          onClick()
+        }}
+      >
+        ✏️ Edit
+      </Button>
       <div>
         {renderContent()}
       </div>
     </div>
   )
 }
+
+export default React.memo(ComponentRenderer, (prevProps, nextProps) => {
+  return prevProps.component.id === nextProps.component.id &&
+         prevProps.isSelected === nextProps.isSelected &&
+         JSON.stringify(prevProps.component.props) === JSON.stringify(nextProps.component.props)
+})

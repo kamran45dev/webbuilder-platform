@@ -767,7 +767,7 @@ export default function BuilderPage() {
         </div>
       )}
 
-      <style>{`
+            <style>{`
         .component-card {
           transition: all 0.2s ease;
         }
@@ -775,7 +775,26 @@ export default function BuilderPage() {
           transform: translateY(-2px);
           box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
+        
+        .component-container {
+          position: relative;
+        }
+        
+        .component-container .edit-button {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          z-index: 10;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+        
+        .component-container:hover .edit-button,
+        .component-container.border-primary .edit-button {
+          opacity: 1;
+        }
       `}</style>
     </>
   )
 }
+ 
