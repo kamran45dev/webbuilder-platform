@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { Container, Row, Col, Button, Navbar, ListGroup, Card, Nav, Modal, ButtonGroup, Dropdown } from 'react-bootstrap'
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, TouchSensor } from '@dnd-kit/core'
@@ -72,6 +72,9 @@ export default function BuilderPage() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, component: null })
 
+  // Add ref for debouncing history
+  const historyTimeoutRef = useRef(null)
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(TouchSensor, {
@@ -87,18 +90,40 @@ export default function BuilderPage() {
     fetchPages()
   }, [projectId])
 
+  // FIXED: Debounced history update
   useEffect(() => {
-    if (components.length > 0 || historyIndex === -1) {
-      const newHistory = history.slice(0, historyIndex + 1)
-      newHistory.push(JSON.parse(JSON.stringify(components)))
-      setHistory(newHistory)
-      setHistoryIndex(newHistory.length - 1)
+    // Clear previous timeout
+    if (historyTimeoutRef.current) {
+      clearTimeout(historyTimeoutRef.current)
+    }
+
+    // Set new timeout (500ms delay)
+    historyTimeoutRef.current = setTimeout(() => {
+      if (components.length > 0 || historyIndex === -1) {
+        const newHistory = history.slice(0, historyIndex + 1)
+        newHistory.push(JSON.parse(JSON.stringify(components)))
+        setHistory(newHistory)
+        setHistoryIndex(newHistory.length - 1)
+      }
+    }, 500) // Wait 500ms after last change
+
+    // Cleanup
+    return () => {
+      if (historyTimeoutRef.current) {
+        clearTimeout(historyTimeoutRef.current)
+      }
     }
   }, [components])
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ignore if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        // Only allow Delete key in inputs
+        if (e.key !== 'Delete') return
+      }
+
       // Delete key
       if (e.key === 'Delete' && selectedComponent) {
         deleteComponent()
@@ -137,6 +162,12 @@ export default function BuilderPage() {
       if (e.key === 'ArrowDown' && e.ctrlKey && selectedComponent) {
         e.preventDefault()
         moveComponentDown()
+      }
+
+      // Ctrl+S (Save)
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault()
+        saveLayout()
       }
     }
 
@@ -455,7 +486,11 @@ export default function BuilderPage() {
 
       {/* Properties Panel */}
       <Col md={3} className="bg-light border-start p-0 overflow-auto">
-        <PropertiesPanel component={selectedComponent} onUpdate={updateComponent} />
+        <PropertiesPanel 
+          key={selectedComponent?.id} 
+          component={selectedComponent} 
+          onUpdate={updateComponent} 
+        />
         {selectedComponent && (
           <div className="p-3 border-top">
             <div className="d-grid gap-2">
@@ -473,6 +508,7 @@ export default function BuilderPage() {
               <small className="text-muted d-block">Ctrl+Z - Undo</small>
               <small className="text-muted d-block">Ctrl+Y - Redo</small>
               <small className="text-muted d-block">Ctrl+↑/↓ - Move</small>
+              <small className="text-muted d-block">Ctrl+S - Save</small>
             </div>
           </div>
         )}
@@ -598,7 +634,11 @@ export default function BuilderPage() {
 
         {mobileTab === 'properties' && (
           <div>
-            <PropertiesPanel component={selectedComponent} onUpdate={updateComponent} />
+            <PropertiesPanel 
+              key={selectedComponent?.id}
+              component={selectedComponent} 
+              onUpdate={updateComponent} 
+            />
             {selectedComponent && (
               <div className="p-3">
                 <Button variant="danger" size="sm" className="w-100" onClick={deleteComponent}>
