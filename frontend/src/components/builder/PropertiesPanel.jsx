@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Form, Button } from 'react-bootstrap'
 import { COMPONENT_TYPES } from './ComponentLibrary'
 
 function PropertiesPanel({ component, onUpdate }) {
   const [localProps, setLocalProps] = useState({})
+  const updateTimeoutRef = useRef(null)
 
-  // Update local state only when component changes
+  // Update local state when component changes
   useEffect(() => {
     if (component) {
-      setLocalProps(component.props)
+      setLocalProps(component.props || {})
     }
-  }, [component?.id]) // Only when ID changes, not props
+  }, [component?.id])
 
   if (!component) {
     return (
@@ -22,49 +23,54 @@ function PropertiesPanel({ component, onUpdate }) {
 
   const { type } = component
 
-  const handleChange = useCallback((key, value) => {
+  const debouncedUpdate = (updatedProps) => {
+    // Clear previous timeout
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+    }
+
+    // Update parent after 300ms delay
+    updateTimeoutRef.current = setTimeout(() => {
+      onUpdate({
+        ...component,
+        props: updatedProps
+      })
+    }, 300)
+  }
+
+  const handleChange = (key, value) => {
     const updatedProps = { ...localProps, [key]: value }
     setLocalProps(updatedProps)
-    
-    onUpdate({
-      ...component,
-      props: updatedProps
-    })
-  }, [localProps, component, onUpdate])
+    debouncedUpdate(updatedProps)
+  }
 
-  const handleArrayItemChange = useCallback((arrayKey, index, itemKey, value) => {
-    const newArray = [...localProps[arrayKey]]
+  const handleArrayItemChange = (arrayKey, index, itemKey, value) => {
+    const newArray = [...(localProps[arrayKey] || [])]
     newArray[index] = { ...newArray[index], [itemKey]: value }
     const updatedProps = { ...localProps, [arrayKey]: newArray }
     setLocalProps(updatedProps)
-    
-    onUpdate({
-      ...component,
-      props: updatedProps
-    })
-  }, [localProps, component, onUpdate])
+    debouncedUpdate(updatedProps)
+  }
 
-  const handleAddArrayItem = useCallback((arrayKey, defaultItem) => {
-    const newArray = [...localProps[arrayKey], defaultItem]
+  const handleAddArrayItem = (arrayKey, defaultItem) => {
+    const newArray = [...(localProps[arrayKey] || []), defaultItem]
     const updatedProps = { ...localProps, [arrayKey]: newArray }
     setLocalProps(updatedProps)
-    
     onUpdate({
       ...component,
       props: updatedProps
     })
-  }, [localProps, component, onUpdate])
+  }
 
-  const handleRemoveArrayItem = useCallback((arrayKey, index) => {
-    const newArray = localProps[arrayKey].filter((_, i) => i !== index)
+  const handleRemoveArrayItem = (arrayKey, index) => {
+    const newArray = (localProps[arrayKey] || []).filter((_, i) => i !== index)
     const updatedProps = { ...localProps, [arrayKey]: newArray }
     setLocalProps(updatedProps)
-    
     onUpdate({
       ...component,
       props: updatedProps
     })
-  }, [localProps, component, onUpdate])
+  }
 
   const renderFields = () => {
     switch (type) {
