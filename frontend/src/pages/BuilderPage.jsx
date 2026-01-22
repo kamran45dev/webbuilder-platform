@@ -261,10 +261,12 @@ export default function BuilderPage() {
     }
   }
 
-  const updateComponent = (updated) => {
-    setComponents(components.map(c => c.id === updated.id ? updated : c))
-    setSelectedComponent(updated)
-  }
+ const updateComponent = (updated) => {
+  setComponents(prevComponents => 
+    prevComponents.map(c => c.id === updated.id ? updated : c)
+  )
+  setSelectedComponent(updated)
+}
 
   const deleteComponent = () => {
     if (!selectedComponent) return

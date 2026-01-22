@@ -5,10 +5,12 @@ import { COMPONENT_TYPES } from './ComponentLibrary'
 function PropertiesPanel({ component, onUpdate }) {
   const [localProps, setLocalProps] = useState({})
   const updateTimeoutRef = useRef(null)
+  const componentIdRef = useRef(null)
 
-  // Update local state when component changes
+  // Update local state ONLY when component ID changes
   useEffect(() => {
-    if (component) {
+    if (component && component.id !== componentIdRef.current) {
+      componentIdRef.current = component.id
       setLocalProps(component.props || {})
     }
   }, [component?.id])
@@ -24,18 +26,16 @@ function PropertiesPanel({ component, onUpdate }) {
   const { type } = component
 
   const debouncedUpdate = (updatedProps) => {
-    // Clear previous timeout
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current)
     }
 
-    // Update parent after 300ms delay
     updateTimeoutRef.current = setTimeout(() => {
       onUpdate({
         ...component,
         props: updatedProps
       })
-    }, 300)
+    }, 500) // Increased to 500ms
   }
 
   const handleChange = (key, value) => {
