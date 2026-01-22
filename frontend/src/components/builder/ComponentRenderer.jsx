@@ -128,8 +128,127 @@ function ComponentRenderer({ component, isSelected, onClick }) {
           </div>
         )
 
-      // … repeat similar fixes for PRICING, GALLERY, VIDEO, FAQ, CARDS, TEAM …
-      // just replace `key={i}` with `key={item.id || item.title || i}` for stability
+      case COMPONENT_TYPES.PRICING:
+        return (
+          <div className="py-5">
+            <h2 className="text-center mb-5">{props.title}</h2>
+            <div className="row justify-content-center">
+              {props.plans.map((plan) => (
+                <div key={plan.id || plan.name} className="col-md-4 mb-3">
+                  <div className={`card h-100 ${plan.highlighted ? 'border-primary shadow' : ''}`}>
+                    <div className="card-body text-center">
+                      {plan.highlighted && <span className="badge bg-primary mb-2">Popular</span>}
+                      <h4 className="card-title">{plan.name}</h4>
+                      <h2 className="my-3">
+                        {plan.price}
+                        <small className="text-muted">{plan.period}</small>
+                      </h2>
+                      <ul className="list-unstyled">
+                        {plan.features.map((feature, fi) => (
+                          <li key={feature || fi} className="mb-2">✓ {feature}</li>
+                        ))}
+                      </ul>
+                      <button className={`btn ${plan.highlighted ? 'btn-primary' : 'btn-outline-primary'} w-100 mt-3`}>
+                        Choose Plan
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case COMPONENT_TYPES.GALLERY:
+        return (
+          <div className="py-5">
+            <h2 className="text-center mb-4">{props.title}</h2>
+            <div className="row">
+              {props.images.map((img, idx) => (
+                <div key={img.id || img.src || idx} className={`col-md-${12 / props.columns} mb-3`}>
+                  <img src={img.src} alt={img.alt} className="img-fluid rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case COMPONENT_TYPES.VIDEO:
+        const paddingBottom = props.aspectRatio === '16:9' ? '56.25%' : '75%'
+        return (
+          <div className="py-5">
+            <h2 className="text-center mb-4">{props.title}</h2>
+            <div className="container" style={{ maxWidth: '800px' }}>
+              <div style={{ position: 'relative', paddingBottom, height: 0, overflow: 'hidden' }}>
+                <iframe
+                  src={props.videoUrl}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        )
+
+      case COMPONENT_TYPES.FAQ:
+        return (
+          <div className="py-5">
+            <h2 className="text-center mb-4">{props.title}</h2>
+            <div className="container" style={{ maxWidth: '800px' }}>
+              <Accordion>
+                {props.items.map((item, idx) => (
+                  <Accordion.Item key={item.id || item.question || idx} eventKey={idx.toString()}>
+                    <Accordion.Header>{item.question}</Accordion.Header>
+                    <Accordion.Body>{item.answer}</Accordion.Body>
+                  </Accordion.Item>
+                ))}
+              </Accordion>
+            </div>
+          </div>
+        )
+
+      case COMPONENT_TYPES.CARDS:
+        return (
+          <div className="py-5">
+            <h2 className="text-center mb-5">{props.title}</h2>
+            <div className="row">
+              {props.items.map((item, idx) => (
+                <div key={item.id || item.title || idx} className={`col-md-${12 / props.columns} mb-3`}>
+                  <div className="card h-100 text-center">
+                    <div className="card-body">
+                      <div className="display-3 mb-3">{item.icon}</div>
+                      <h5 className="card-title">{item.title}</h5>
+                      <p className="card-text">{item.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case COMPONENT_TYPES.TEAM:
+        return (
+          <div className="py-5 bg-light">
+            <h2 className="text-center mb-5">{props.title}</h2>
+            <div className="row justify-content-center">
+              {props.members.map((member, idx) => (
+                <div key={member.id || member.name || idx} className="col-md-4 mb-4">
+                  <div className="card text-center h-100">
+                    <img src={member.image} alt={member.name} className="card-img-top rounded-circle mx-auto mt-3" style={{ width: '150px', height: '150px', objectFit: 'cover' }} />
+                    <div className="card-body">
+                      <h5 className="card-title">{member.name}</h5>
+                      <p className="text-muted">{member.role}</p>
+                      <p className="card-text small">{member.bio}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
 
       default:
         return <div>Unknown component</div>
@@ -162,9 +281,9 @@ function ComponentRenderer({ component, isSelected, onClick }) {
   )
 }
 
-// Memoize with stable shallow comparison
+// Memoize with shallow reference comparison
 export default React.memo(ComponentRenderer, (prevProps, nextProps) => {
   return prevProps.component.id === nextProps.component.id &&
          prevProps.isSelected === nextProps.isSelected &&
-         prevProps.component.props === nextProps.component.props // shallow compare reference
+         prevProps.component.props === nextProps.component.props
 })
