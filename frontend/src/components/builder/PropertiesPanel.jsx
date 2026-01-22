@@ -1,7 +1,17 @@
+import { useState, useEffect, useCallback } from 'react'
 import { Form, Button } from 'react-bootstrap'
 import { COMPONENT_TYPES } from './ComponentLibrary'
 
-export default function PropertiesPanel({ component, onUpdate }) {
+function PropertiesPanel({ component, onUpdate }) {
+  const [localProps, setLocalProps] = useState({})
+
+  // Update local state only when component changes
+  useEffect(() => {
+    if (component) {
+      setLocalProps(component.props)
+    }
+  }, [component?.id]) // Only when ID changes, not props
+
   if (!component) {
     return (
       <div className="p-3 text-muted">
@@ -10,39 +20,51 @@ export default function PropertiesPanel({ component, onUpdate }) {
     )
   }
 
-  const { type, props } = component
+  const { type } = component
 
-  const handleChange = (key, value) => {
+  const handleChange = useCallback((key, value) => {
+    const updatedProps = { ...localProps, [key]: value }
+    setLocalProps(updatedProps)
+    
     onUpdate({
       ...component,
-      props: { ...props, [key]: value }
+      props: updatedProps
     })
-  }
+  }, [localProps, component, onUpdate])
 
-  const handleArrayItemChange = (arrayKey, index, itemKey, value) => {
-    const newArray = [...props[arrayKey]]
+  const handleArrayItemChange = useCallback((arrayKey, index, itemKey, value) => {
+    const newArray = [...localProps[arrayKey]]
     newArray[index] = { ...newArray[index], [itemKey]: value }
+    const updatedProps = { ...localProps, [arrayKey]: newArray }
+    setLocalProps(updatedProps)
+    
     onUpdate({
       ...component,
-      props: { ...props, [arrayKey]: newArray }
+      props: updatedProps
     })
-  }
+  }, [localProps, component, onUpdate])
 
-  const handleAddArrayItem = (arrayKey, defaultItem) => {
-    const newArray = [...props[arrayKey], defaultItem]
+  const handleAddArrayItem = useCallback((arrayKey, defaultItem) => {
+    const newArray = [...localProps[arrayKey], defaultItem]
+    const updatedProps = { ...localProps, [arrayKey]: newArray }
+    setLocalProps(updatedProps)
+    
     onUpdate({
       ...component,
-      props: { ...props, [arrayKey]: newArray }
+      props: updatedProps
     })
-  }
+  }, [localProps, component, onUpdate])
 
-  const handleRemoveArrayItem = (arrayKey, index) => {
-    const newArray = props[arrayKey].filter((_, i) => i !== index)
+  const handleRemoveArrayItem = useCallback((arrayKey, index) => {
+    const newArray = localProps[arrayKey].filter((_, i) => i !== index)
+    const updatedProps = { ...localProps, [arrayKey]: newArray }
+    setLocalProps(updatedProps)
+    
     onUpdate({
       ...component,
-      props: { ...props, [arrayKey]: newArray }
+      props: updatedProps
     })
-  }
+  }, [localProps, component, onUpdate])
 
   const renderFields = () => {
     switch (type) {
@@ -52,35 +74,35 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Subtitle</Form.Label>
               <Form.Control
-                value={props.subtitle}
+                value={localProps.subtitle || ''}
                 onChange={(e) => handleChange('subtitle', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Button Text</Form.Label>
               <Form.Control
-                value={props.buttonText}
+                value={localProps.buttonText || ''}
                 onChange={(e) => handleChange('buttonText', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Button Link</Form.Label>
               <Form.Control
-                value={props.buttonLink}
+                value={localProps.buttonLink || ''}
                 onChange={(e) => handleChange('buttonLink', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Background Color</Form.Label>
               <Form.Select
-                value={props.bgColor}
+                value={localProps.bgColor || 'primary'}
                 onChange={(e) => handleChange('bgColor', e.target.value)}
               >
                 <option value="primary">Primary</option>
@@ -94,7 +116,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Text Alignment</Form.Label>
               <Form.Select
-                value={props.textAlign}
+                value={localProps.textAlign || 'center'}
                 onChange={(e) => handleChange('textAlign', e.target.value)}
               >
                 <option value="left">Left</option>
@@ -111,14 +133,14 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Brand Name</Form.Label>
               <Form.Control
-                value={props.brandName}
+                value={localProps.brandName || ''}
                 onChange={(e) => handleChange('brandName', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Background Color</Form.Label>
               <Form.Select
-                value={props.bgColor}
+                value={localProps.bgColor || 'light'}
                 onChange={(e) => handleChange('bgColor', e.target.value)}
               >
                 <option value="light">Light</option>
@@ -129,7 +151,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Text Color</Form.Label>
               <Form.Select
-                value={props.textColor}
+                value={localProps.textColor || 'dark'}
                 onChange={(e) => handleChange('textColor', e.target.value)}
               >
                 <option value="dark">Dark</option>
@@ -137,19 +159,19 @@ export default function PropertiesPanel({ component, onUpdate }) {
               </Form.Select>
             </Form.Group>
             <Form.Label>Navigation Links</Form.Label>
-            {props.links.map((link, i) => (
+            {(localProps.links || []).map((link, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Link Text"
-                  value={link.text}
+                  value={link.text || ''}
                   onChange={(e) => handleArrayItemChange('links', i, 'text', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="URL"
-                  value={link.url}
+                  value={link.url || ''}
                   onChange={(e) => handleArrayItemChange('links', i, 'url', e.target.value)}
                   className="mb-1"
                 />
@@ -168,31 +190,31 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Label>Feature Items</Form.Label>
-            {props.items.map((item, i) => (
+            {(localProps.items || []).map((item, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Icon (emoji)"
-                  value={item.icon}
+                  value={item.icon || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'icon', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="Title"
-                  value={item.title}
+                  value={item.title || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'title', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="Description"
-                  value={item.description}
+                  value={item.description || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'description', e.target.value)}
                   className="mb-1"
                 />
@@ -211,28 +233,28 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Subtitle</Form.Label>
               <Form.Control
-                value={props.subtitle || ''}
+                value={localProps.subtitle || ''}
                 onChange={(e) => handleChange('subtitle', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Button Text</Form.Label>
               <Form.Control
-                value={props.buttonText}
+                value={localProps.buttonText || ''}
                 onChange={(e) => handleChange('buttonText', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Background Color</Form.Label>
               <Form.Select
-                value={props.bgColor}
+                value={localProps.bgColor || 'primary'}
                 onChange={(e) => handleChange('bgColor', e.target.value)}
               >
                 <option value="primary">Primary</option>
@@ -250,14 +272,14 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Footer Text</Form.Label>
               <Form.Control
-                value={props.text}
+                value={localProps.text || ''}
                 onChange={(e) => handleChange('text', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Background Color</Form.Label>
               <Form.Select
-                value={props.bgColor}
+                value={localProps.bgColor || 'dark'}
                 onChange={(e) => handleChange('bgColor', e.target.value)}
               >
                 <option value="dark">Dark</option>
@@ -266,19 +288,19 @@ export default function PropertiesPanel({ component, onUpdate }) {
               </Form.Select>
             </Form.Group>
             <Form.Label>Footer Links</Form.Label>
-            {props.links.map((link, i) => (
+            {(localProps.links || []).map((link, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Link Text"
-                  value={link.text}
+                  value={link.text || ''}
                   onChange={(e) => handleArrayItemChange('links', i, 'text', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="URL"
-                  value={link.url}
+                  value={link.url || ''}
                   onChange={(e) => handleArrayItemChange('links', i, 'url', e.target.value)}
                   className="mb-1"
                 />
@@ -299,14 +321,14 @@ export default function PropertiesPanel({ component, onUpdate }) {
               <Form.Control
                 as="textarea"
                 rows={3}
-                value={props.content}
+                value={localProps.content || ''}
                 onChange={(e) => handleChange('content', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Size</Form.Label>
               <Form.Select
-                value={props.size}
+                value={localProps.size || 'normal'}
                 onChange={(e) => handleChange('size', e.target.value)}
               >
                 <option value="small">Small</option>
@@ -317,7 +339,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Alignment</Form.Label>
               <Form.Select
-                value={props.align}
+                value={localProps.align || 'left'}
                 onChange={(e) => handleChange('align', e.target.value)}
               >
                 <option value="left">Left</option>
@@ -334,21 +356,21 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Image URL</Form.Label>
               <Form.Control
-                value={props.src}
+                value={localProps.src || ''}
                 onChange={(e) => handleChange('src', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Alt Text</Form.Label>
               <Form.Control
-                value={props.alt}
+                value={localProps.alt || ''}
                 onChange={(e) => handleChange('alt', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Width</Form.Label>
               <Form.Select
-                value={props.width}
+                value={localProps.width || '100%'}
                 onChange={(e) => handleChange('width', e.target.value)}
               >
                 <option value="100%">Full Width</option>
@@ -360,7 +382,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Alignment</Form.Label>
               <Form.Select
-                value={props.align}
+                value={localProps.align || 'center'}
                 onChange={(e) => handleChange('align', e.target.value)}
               >
                 <option value="left">Left</option>
@@ -377,21 +399,21 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Subtitle</Form.Label>
               <Form.Control
-                value={props.subtitle}
+                value={localProps.subtitle || ''}
                 onChange={(e) => handleChange('subtitle', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Button Text</Form.Label>
               <Form.Control
-                value={props.buttonText}
+                value={localProps.buttonText || ''}
                 onChange={(e) => handleChange('buttonText', e.target.value)}
               />
             </Form.Group>
@@ -404,24 +426,24 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Label>Testimonial Items</Form.Label>
-            {props.items.map((item, i) => (
+            {(localProps.items || []).map((item, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Name"
-                  value={item.name}
+                  value={item.name || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'name', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="Role"
-                  value={item.role}
+                  value={item.role || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'role', e.target.value)}
                   className="mb-1"
                 />
@@ -430,7 +452,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
                   as="textarea"
                   rows={2}
                   placeholder="Testimonial"
-                  value={item.text}
+                  value={item.text || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'text', e.target.value)}
                   className="mb-1"
                 />
@@ -449,7 +471,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
@@ -462,14 +484,14 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Columns</Form.Label>
               <Form.Select
-                value={props.columns}
+                value={localProps.columns || 3}
                 onChange={(e) => handleChange('columns', parseInt(e.target.value))}
               >
                 <option value="2">2</option>
@@ -486,21 +508,21 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Video URL (YouTube embed)</Form.Label>
               <Form.Control
-                value={props.videoUrl}
+                value={localProps.videoUrl || ''}
                 onChange={(e) => handleChange('videoUrl', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Aspect Ratio</Form.Label>
               <Form.Select
-                value={props.aspectRatio}
+                value={localProps.aspectRatio || '16:9'}
                 onChange={(e) => handleChange('aspectRatio', e.target.value)}
               >
                 <option value="16:9">16:9</option>
@@ -516,17 +538,17 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Label>FAQ Items</Form.Label>
-            {props.items.map((item, i) => (
+            {(localProps.items || []).map((item, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Question"
-                  value={item.question}
+                  value={item.question || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'question', e.target.value)}
                   className="mb-1"
                 />
@@ -535,7 +557,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
                   as="textarea"
                   rows={2}
                   placeholder="Answer"
-                  value={item.answer}
+                  value={item.answer || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'answer', e.target.value)}
                   className="mb-1"
                 />
@@ -554,14 +576,14 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Columns</Form.Label>
               <Form.Select
-                value={props.columns}
+                value={localProps.columns || 3}
                 onChange={(e) => handleChange('columns', parseInt(e.target.value))}
               >
                 <option value="2">2</option>
@@ -570,26 +592,26 @@ export default function PropertiesPanel({ component, onUpdate }) {
               </Form.Select>
             </Form.Group>
             <Form.Label>Card Items</Form.Label>
-            {props.items.map((item, i) => (
+            {(localProps.items || []).map((item, i) => (
               <div key={i} className="border p-2 mb-2 rounded">
                 <Form.Control
                   size="sm"
                   placeholder="Icon (emoji)"
-                  value={item.icon}
+                  value={item.icon || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'icon', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="Title"
-                  value={item.title}
+                  value={item.title || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'title', e.target.value)}
                   className="mb-1"
                 />
                 <Form.Control
                   size="sm"
                   placeholder="Description"
-                  value={item.description}
+                  value={item.description || ''}
                   onChange={(e) => handleArrayItemChange('items', i, 'description', e.target.value)}
                   className="mb-1"
                 />
@@ -608,7 +630,7 @@ export default function PropertiesPanel({ component, onUpdate }) {
             <Form.Group className="mb-3">
               <Form.Label>Title</Form.Label>
               <Form.Control
-                value={props.title}
+                value={localProps.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
               />
             </Form.Group>
@@ -629,3 +651,5 @@ export default function PropertiesPanel({ component, onUpdate }) {
     </div>
   )
 }
+
+export default PropertiesPanel
